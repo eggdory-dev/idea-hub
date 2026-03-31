@@ -23,7 +23,24 @@ echo "================================================"
 # Issue 정보에서 repo 경로 찾기
 ISSUE_JSON=$(gh issue view "$ISSUE_NUMBER" --repo "$HUB_REPO" --json title,body)
 ISSUE_TITLE=$(echo "$ISSUE_JSON" | jq -r '.title' | sed 's/\[IDEA\] //')
-SLUG=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9가-힣]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-50)
+SLUG=$(echo "$ISSUE_TITLE" | python3 -c "
+import sys
+title = sys.stdin.read().strip()
+result = ''
+for ch in title:
+    if ch.isascii() and (ch.isalnum() or ch == '-'):
+        result += ch.lower()
+    elif ch == ' ':
+        result += '-'
+result = '-'.join(filter(None, result.split('-')))
+print(result[:50] if result and result != '-' else '')
+")
+
+if [ -z "$SLUG" ]; then
+    echo "  한글 제목이라 자동 slug 생성이 안 됩니다."
+    echo -n "  레포 이름을 영문으로 입력해주세요: "
+    read SLUG
+fi
 REPO_PATH="${PROJECTS_DIR}/${SLUG}"
 
 if [ ! -d "$REPO_PATH" ]; then

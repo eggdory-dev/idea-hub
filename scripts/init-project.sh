@@ -42,7 +42,25 @@ echo "  제목: ${ISSUE_TITLE}"
 # 2. slug 생성 및 repo 생성
 echo ""
 echo "[2/7] 레포지토리 생성..."
-SLUG=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9가-힣]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-50)
+SLUG=$(echo "$ISSUE_TITLE" | python3 -c "
+import sys
+title = sys.stdin.read().strip()
+result = ''
+for ch in title:
+    if ch.isascii() and (ch.isalnum() or ch == '-'):
+        result += ch.lower()
+    elif ch == ' ':
+        result += '-'
+result = '-'.join(filter(None, result.split('-')))
+# 영문이 없으면 사용자에게 slug 입력 요청
+print(result[:50] if result and result != '-' else '')
+")
+
+if [ -z "$SLUG" ]; then
+    echo "  한글 제목이라 자동 slug 생성이 안 됩니다."
+    echo -n "  레포 이름을 영문으로 입력해주세요: "
+    read SLUG
+fi
 REPO_NAME="${SLUG}"
 
 # repo 존재 여부 확인
