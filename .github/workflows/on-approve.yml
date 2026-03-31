@@ -1,12 +1,19 @@
 name: "아이디어 승인 처리"
 
 on:
+  # 댓글로 /approve, /reject
   issue_comment:
     types: [created]
+  # 라벨 직접 변경 감지
+  issues:
+    types: [labeled]
 
 jobs:
-  approve:
-    if: contains(github.event.comment.body, '/approve')
+  # 댓글로 /approve
+  approve-by-comment:
+    if: >
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/approve')
     runs-on: ubuntu-latest
     steps:
       - name: 승인 라벨 변경
@@ -17,7 +24,7 @@ jobs:
             --repo ${{ github.repository }} \
             --add-label "approved" \
             --remove-label "needs-review" \
-            --remove-label "intake"
+            --remove-label "intake" || true
 
       - name: 승인 확인 댓글
         env:
@@ -41,7 +48,9 @@ jobs:
           NUMBER="${{ github.event.issue.number }}"
           APPROVER="${{ github.event.comment.user.login }}"
 
-          MESSAGE="✅ 아이디어 승인됨
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="✅ 아이디어 승인됨
 
           제목: ${TITLE}
           승인자: ${APPROVER}
@@ -51,13 +60,41 @@ jobs:
           로컬에서 레포 생성 및 개발을 시작하세요.
           명령어: ./scripts/init-project.sh ${NUMBER}"
 
+  # 라벨 직접 변경으로 approved
+  approve-by-label:
+    if: >
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 텔레그램 승인 알림
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          TITLE="${{ github.event.issue.title }}"
+          URL="${{ github.event.issue.html_url }}"
+          NUMBER="${{ github.event.issue.number }}"
+          APPROVER="${{ github.event.sender.login }}"
+
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d chat_id="${TELEGRAM_CHAT_ID}" \
-            -d text="${MESSAGE}" \
-            -d parse_mode="HTML"
+            -d text="✅ 아이디어 승인됨 (라벨 변경)
 
-  reject:
-    if: contains(github.event.comment.body, '/reject')
+          제목: ${TITLE}
+          승인자: ${APPROVER}
+          Issue: #${NUMBER}
+          링크: ${URL}
+
+          로컬에서 레포 생성 및 개발을 시작하세요.
+          명령어: ./scripts/init-project.sh ${NUMBER}"
+
+  # 댓글로 /reject
+  reject-by-comment:
+    if: >
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/reject')
     runs-on: ubuntu-latest
     steps:
       - name: 거절 라벨 변경
@@ -68,7 +105,7 @@ jobs:
             --repo ${{ github.repository }} \
             --add-label "rejected" \
             --remove-label "needs-review" \
-            --remove-label "intake"
+            --remove-label "intake" || true
 
       - name: 거절 댓글
         env:
@@ -77,3 +114,41 @@ jobs:
           gh issue comment ${{ github.event.issue.number }} \
             --repo ${{ github.repository }} \
             --body "❌ **거절됨** by @${{ github.event.comment.user.login }}"
+
+      - name: 텔레그램 거절 알림
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          TITLE="${{ github.event.issue.title }}"
+          NUMBER="${{ github.event.issue.number }}"
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="❌ 아이디어 거절됨
+
+          제목: ${TITLE}
+          Issue: #${NUMBER}"
+
+  # 라벨 직접 변경으로 rejected
+  reject-by-label:
+    if: >
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'rejected'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 텔레그램 거절 알림
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          TITLE="${{ github.event.issue.title }}"
+          NUMBER="${{ github.event.issue.number }}"
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="❌ 아이디어 거절됨 (라벨 변경)
+
+          제목: ${TITLE}
+          Issue: #${NUMBER}"
