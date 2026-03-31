@@ -1,0 +1,41 @@
+name: "아이디어 생성 알림"
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  notify:
+    if: contains(github.event.issue.labels.*.name, 'intake')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 텔레그램 알림 전송
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          TITLE="${{ github.event.issue.title }}"
+          URL="${{ github.event.issue.html_url }}"
+          AUTHOR="${{ github.event.issue.user.login }}"
+
+          MESSAGE="📥 새 아이디어 등록
+
+          제목: ${TITLE}
+          작성자: ${AUTHOR}
+          링크: ${URL}
+
+          분석을 시작하려면 로컬에서 idea-hub를 확인하세요."
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="${MESSAGE}" \
+            -d parse_mode="HTML"
+
+      - name: needs-review 라벨 추가
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --add-label "needs-review" \
+            --remove-label "intake"

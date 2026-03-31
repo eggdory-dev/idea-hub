@@ -1,0 +1,88 @@
+name: "💡 아이디어 제출"
+description: "새로운 아이디어를 제출합니다."
+title: "[IDEA] "
+labels: ["intake"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: "프로젝트 제목"
+      description: "아이디어의 핵심을 나타내는 간결한 제목"
+      placeholder: "예: AI 기반 일정 관리 앱"
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: "배경 / 문제"
+      description: "이 아이디어가 필요한 이유, 해결하려는 문제"
+      placeholder: "현재 어떤 문제가 있고, 왜 이것이 필요한지 설명해주세요."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_effect
+    attributes:
+      label: "기대 효과"
+      description: "이 아이디어가 실현되면 어떤 효과가 있는지"
+      placeholder: "사용자 경험 개선, 비용 절감, 시간 단축 등"
+    validations:
+      required: true
+
+  - type: textarea
+    id: core_features
+    attributes:
+      label: "핵심 기능"
+      description: "반드시 포함되어야 하는 기능 목록"
+      placeholder: |
+        - 기능 1: 설명
+        - 기능 2: 설명
+        - 기능 3: 설명
+    validations:
+      required: true
+
+  - type: textarea
+    id: exclusions
+    attributes:
+      label: "제외 범위"
+      description: "이번 범위에서 제외할 것들"
+      placeholder: "MVP에서 제외할 기능이나 범위를 명시해주세요."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "우선순위"
+      options:
+        - "🔴 긴급 (Urgent)"
+        - "🟠 높음 (High)"
+        - "🟡 보통 (Medium)"
+        - "🟢 낮음 (Low)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: "플랫폼"
+      options:
+        - "Web"
+        - "Backend (API)"
+        - "Mobile (Flutter)"
+        - "Mobile (React Native)"
+        - "Monorepo (Full-stack)"
+        - "CLI / Script"
+        - "기타"
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: "참고 자료"
+      description: "참고할 서비스, 링크, 디자인, 문서 등"
+      placeholder: "URL, 스크린샷, 경쟁 서비스 등"
+    validations:
+      required: false
