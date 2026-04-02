@@ -141,7 +141,7 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
   log "  Claude Code 실행 중..."
 
   # Claude Code 실행
-  RESULT=$(cd "$PROJECT_DIR" && echo -e "$PROMPT" | claude --print 2>&1) || true
+  RESULT=$(cd "$PROJECT_DIR" && echo -e "$PROMPT" | claude --print --dangerously-skip-permissions 2>&1) || true
 
   # 결과 요약 (앞 2000자)
   RESULT_SUMMARY=$(echo "$RESULT" | tail -100 | head -c 2000)
