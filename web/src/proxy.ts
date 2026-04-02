@@ -5,7 +5,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 로그인/인증 관련 경로는 통과
-  const publicPaths = ["/login", "/unauthorized", "/api/auth"];
+  const publicPaths = ["/login", "/unauthorized", "/guide", "/api/auth"];
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }

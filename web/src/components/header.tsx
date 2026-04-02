@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, LogIn, LogOut, PlusCircle } from "lucide-react";
+import { Lightbulb, LogIn, LogOut, PlusCircle, HelpCircle } from "lucide-react";
 
 export function Header() {
   const { data: session, status } = useSession();
@@ -40,13 +40,21 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Button
-              size="sm"
-              onClick={() => signIn("github", { callbackUrl: "/" })}
-            >
-              <LogIn className="h-4 w-4" />
-              로그인
-            </Button>
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/guide">
+                  <HelpCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">사용 안내</span>
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => signIn("github", { callbackUrl: "/" })}
+              >
+                <LogIn className="h-4 w-4" />
+                로그인
+              </Button>
+            </>
           )}
         </nav>
       </div>

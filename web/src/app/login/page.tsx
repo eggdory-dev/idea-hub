@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpCircle } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -15,7 +17,7 @@ export default function LoginPage() {
             아이디어 관리 플랫폼에 로그인하세요
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <Button
             className="w-full h-12 text-base"
             onClick={() => signIn("github", { callbackUrl: "/" })}
@@ -25,7 +27,13 @@ export default function LoginPage() {
             </svg>
             GitHub으로 로그인
           </Button>
-          <p className="mt-4 text-center text-xs text-slate-400">
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/guide">
+              <HelpCircle className="h-4 w-4 mr-2" />
+              사용 안내 보기
+            </Link>
+          </Button>
+          <p className="text-center text-xs text-slate-400">
             허용된 사용자만 접근할 수 있습니다
           </p>
         </CardContent>
