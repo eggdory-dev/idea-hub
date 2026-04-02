@@ -24,6 +24,12 @@ export function Header() {
               <span className="hidden text-sm text-slate-500 sm:inline">
                 @{(session.user as { username?: string }).username ?? session.user?.name}
               </span>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/guide">
+                  <HelpCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">사용 안내</span>
+                </Link>
+              </Button>
               <Button asChild size="sm" variant="default">
                 <Link href="/new">
                   <PlusCircle className="h-4 w-4" />
