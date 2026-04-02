@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getIdea, getIdeaComments } from "@/lib/github";
 import { StatusBadge } from "@/components/status-badge";
+import { CommentForm } from "@/components/comment-form";
+import { StatusChanger } from "@/components/status-changer";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   ArrowLeft,
   CalendarDays,
@@ -14,7 +16,7 @@ import {
   User2,
 } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ number: string }>;
@@ -33,7 +35,6 @@ export default async function IdeaDetailPage({ params }: PageProps) {
 
   if (!idea) notFound();
 
-  // Parse body sections
   const bodyLines = idea.body ?? "";
 
   return (
@@ -78,6 +79,13 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Status Changer */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <StatusChanger issueNumber={number} currentStatus={idea.status} />
+        </CardContent>
+      </Card>
+
       <Separator className="mb-6" />
 
       {/* Body */}
@@ -90,16 +98,17 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       </Card>
 
       {/* Comments */}
-      {comments.length > 0 && (
-        <div>
-          <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
-            <MessageSquare className="h-4 w-4" />
-            댓글 {comments.length}개
-          </h2>
-          <div className="space-y-4">
+      <div className="mb-6">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
+          <MessageSquare className="h-4 w-4" />
+          댓글 {comments.length}개
+        </h2>
+
+        {comments.length > 0 && (
+          <div className="space-y-3 mb-6">
             {comments.map((comment) => (
               <Card key={comment.id}>
-                <CardHeader className="pb-2 pt-4">
+                <CardHeader className="pb-2 pt-4 px-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-slate-700">
                       @{comment.author}
@@ -109,7 +118,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-4 pt-0">
+                <CardContent className="pb-4 pt-0 px-4">
                   <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700">
                     {comment.body}
                   </pre>
@@ -117,8 +126,16 @@ export default async function IdeaDetailPage({ params }: PageProps) {
               </Card>
             ))}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Comment Form */}
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">댓글 작성</h3>
+            <CommentForm issueNumber={number} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -140,6 +157,9 @@ function BodyRenderer({ body }: { body: string }) {
         const newlineIdx = section.indexOf("\n");
         const heading = newlineIdx === -1 ? section : section.slice(0, newlineIdx);
         const content = newlineIdx === -1 ? "" : section.slice(newlineIdx + 1).trim();
+
+        // "---" 이하 (제출자 정보 등) 숨기기
+        if (heading.startsWith("---")) return null;
 
         return (
           <div key={i}>

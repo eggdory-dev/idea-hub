@@ -165,3 +165,55 @@ ${formData.references}
 
   return data.number;
 }
+
+export async function addComment(
+  issueNumber: number,
+  body: string
+): Promise<void> {
+  const octokit = getOctokit();
+  await octokit.issues.createComment({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    issue_number: issueNumber,
+    body,
+  });
+}
+
+export async function updateIdeaStatus(
+  issueNumber: number,
+  newStatus: string
+): Promise<void> {
+  const octokit = getOctokit();
+
+  // 현재 라벨 가져오기
+  const { data: issue } = await octokit.issues.get({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    issue_number: issueNumber,
+  });
+
+  const statusLabels = [
+    "intake",
+    "needs-review",
+    "approved",
+    "rejected",
+    "on-hold",
+    "building",
+    "done",
+  ];
+
+  // 기존 상태 라벨 제거
+  const currentLabels = issue.labels
+    .map((l) => (typeof l === "string" ? l : l.name ?? ""))
+    .filter((l) => !statusLabels.includes(l));
+
+  // 새 상태 라벨 추가
+  currentLabels.push(newStatus);
+
+  await octokit.issues.update({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    issue_number: issueNumber,
+    labels: currentLabels,
+  });
+}
