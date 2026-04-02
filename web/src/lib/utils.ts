@@ -14,6 +14,7 @@ export function getStatusLabel(status: IdeaStatus): string {
     building: "개발 중",
     done: "완료",
     rejected: "반려",
+    "on-hold": "보류",
   };
   return labels[status] ?? status;
 }
@@ -26,6 +27,7 @@ export function getStatusColor(status: IdeaStatus): string {
     building: "bg-purple-50 text-purple-700 border-purple-200",
     done: "bg-green-50 text-green-700 border-green-200",
     rejected: "bg-red-50 text-red-700 border-red-200",
+    "on-hold": "bg-gray-100 text-gray-700 border-gray-200",
   };
   return colors[status] ?? "bg-gray-100 text-gray-700 border-gray-200";
 }
@@ -38,6 +40,7 @@ export function extractStatusFromLabels(labels: string[]): IdeaStatus {
     "building",
     "done",
     "rejected",
+    "on-hold",
   ];
   for (const label of labels) {
     if (statusLabels.includes(label as IdeaStatus)) {

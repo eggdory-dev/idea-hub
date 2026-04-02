@@ -4,7 +4,8 @@ export type IdeaStatus =
   | "approved"
   | "building"
   | "done"
-  | "rejected";
+  | "rejected"
+  | "on-hold";
 
 export interface Idea {
   number: number;

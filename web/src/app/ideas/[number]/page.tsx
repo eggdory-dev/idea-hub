@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getIdea, getIdeaComments } from "@/lib/github";
 import { StatusBadge } from "@/components/status-badge";
 import { CommentForm } from "@/components/comment-form";
+import { CommentItem } from "@/components/comment-item";
 import { StatusChanger } from "@/components/status-changer";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -106,24 +107,13 @@ export default async function IdeaDetailPage({ params }: PageProps) {
 
         {comments.length > 0 && (
           <div className="space-y-3 mb-6">
-            {comments.map((comment) => (
-              <Card key={comment.id}>
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-700">
-                      @{comment.author}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {formatDate(comment.createdAt)}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="pb-4 pt-0 px-4">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700">
-                    {comment.body}
-                  </pre>
-                </CardContent>
-              </Card>
+            {[...comments].reverse().map((comment) => (
+              <CommentItem
+                key={comment.id}
+                author={comment.author}
+                date={formatDate(comment.createdAt)}
+                body={comment.body}
+              />
             ))}
           </div>
         )}
