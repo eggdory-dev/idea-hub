@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { User2, CalendarDays, ArrowRight } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   let ideas: Idea[] = [];
