@@ -45,7 +45,7 @@ export function Header() {
               onClick={() => signIn("github", { callbackUrl: "/" })}
             >
               <LogIn className="h-4 w-4" />
-              GitHub 로그인
+              로그인
             </Button>
           )}
         </nav>
