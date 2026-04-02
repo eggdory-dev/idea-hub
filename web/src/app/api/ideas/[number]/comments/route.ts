@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { addComment, getIdea } from "@/lib/github";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendDiscordNotification } from "@/lib/discord";
 
 export async function POST(
   request: NextRequest,
@@ -36,9 +37,11 @@ export async function POST(
     // 텔레그램 알림
     const idea = await getIdea(issueNumber);
     const title = idea?.title ?? `#${issueNumber}`;
-    await sendTelegramNotification(
-      `💬 새 댓글 등록\n\n아이디어: ${title}\n작성자: @${username}\n내용: ${body.trim().slice(0, 200)}\n\n👉 https://idea-hub-eggdory.vercel.app/ideas/${issueNumber}`
-    );
+    const notificationMessage = `💬 새 댓글 등록\n\n아이디어: ${title}\n작성자: @${username}\n내용: ${body.trim().slice(0, 200)}\n\n👉 https://idea-hub-eggdory.vercel.app/ideas/${issueNumber}`;
+    await Promise.all([
+      sendTelegramNotification(notificationMessage),
+      sendDiscordNotification(notificationMessage),
+    ]);
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {

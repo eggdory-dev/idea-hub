@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { updateIdeaStatus, addComment, getIdea } from "@/lib/github";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendDiscordNotification } from "@/lib/discord";
 
 const VALID_STATUSES = [
   "intake",
@@ -62,9 +63,11 @@ export async function POST(
     // 텔레그램 알림
     const idea = await getIdea(issueNumber);
     const title = idea?.title ?? `#${issueNumber}`;
-    await sendTelegramNotification(
-      `🔄 상태 변경\n\n아이디어: ${title}\n새 상태: ${statusLabel}\n변경자: @${username}\n\n👉 https://idea-hub-eggdory.vercel.app/ideas/${issueNumber}`
-    );
+    const notificationMessage = `🔄 상태 변경\n\n아이디어: ${title}\n새 상태: ${statusLabel}\n변경자: @${username}\n\n👉 https://idea-hub-eggdory.vercel.app/ideas/${issueNumber}`;
+    await Promise.all([
+      sendTelegramNotification(notificationMessage),
+      sendDiscordNotification(notificationMessage),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
