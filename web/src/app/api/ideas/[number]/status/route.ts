@@ -63,7 +63,7 @@ export async function POST(
     // 텔레그램 알림
     const idea = await getIdea(issueNumber);
     const title = idea?.title ?? `#${issueNumber}`;
-    const notificationMessage = `🔄 상태 변경\n\n아이디어: ${title}\n새 상태: ${statusLabel}\n변경자: @${username}\n\n👉 https://idea-hub-eggdory.vercel.app/ideas/${issueNumber}`;
+    const notificationMessage = `🔄 상태 변경\n\n아이디어: ${title}\n새 상태: ${statusLabel}\n변경자: @${username}\n\n👉 https://web-iota-ashy-12.vercel.app/ideas/${issueNumber}`;
     await Promise.all([
       sendTelegramNotification(notificationMessage),
       sendDiscordNotification(notificationMessage),

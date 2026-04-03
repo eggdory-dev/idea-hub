@@ -230,7 +230,7 @@ _자동 실행 by auto-dev.sh_"
 프로젝트: ${PROJECT_SLUG}
 결과: ${RESULT_SUMMARY:0:500}
 
-👉 https://idea-hub-eggdory.vercel.app/ideas/${ISSUE_NUMBER}"
+👉 https://web-iota-ashy-12.vercel.app/ideas/${ISSUE_NUMBER}"
   send_notification "$NOTIFY_MSG"
 
   log "  완료. 결과 댓글 + 알림 전송."
