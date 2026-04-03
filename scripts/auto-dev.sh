@@ -25,9 +25,40 @@ LOCK_FILE="${STATE_DIR}/auto-dev.lock"
 # 상태 디렉토리 생성
 mkdir -p "$STATE_DIR"
 
+# 환경변수 로드
+if [ -f "${STATE_DIR}/.env" ]; then
+  set -a
+  source "${STATE_DIR}/.env"
+  set +a
+fi
+
+# 알림 설정 (Vercel 환경변수와 동일한 값 사용)
+DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
+
 # 로그 함수 (KST)
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S KST')] $*" | tee -a "$LOG_FILE"
+}
+
+# 알림 함수
+send_notification() {
+  local message="$1"
+
+  # Discord
+  if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+    curl -s -o /dev/null -X POST "$DISCORD_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -d "{\"content\": $(echo "$message" | jq -Rs .)}" 2>/dev/null || true
+  fi
+
+  # Telegram
+  if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+    curl -s -o /dev/null -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      -H "Content-Type: application/json" \
+      -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": $(echo "$message" | jq -Rs .)}" 2>/dev/null || true
+  fi
 }
 
 # 잠금 확인 (중복 실행 방지)
@@ -192,7 +223,17 @@ _자동 실행 by auto-dev.sh_"
 
   gh issue comment "$ISSUE_NUMBER" --repo "$HUB_REPO" --body "$REPORT_BODY" 2>/dev/null || true
 
-  log "  완료. 결과 댓글 작성."
+  # 디스코드 + 텔레그램 알림
+  NOTIFY_MSG="🤖 자동 개발 완료
+
+아이디어: ${ISSUE_TITLE}
+프로젝트: ${PROJECT_SLUG}
+결과: ${RESULT_SUMMARY:0:500}
+
+👉 https://idea-hub-eggdory.vercel.app/ideas/${ISSUE_NUMBER}"
+  send_notification "$NOTIFY_MSG"
+
+  log "  완료. 결과 댓글 + 알림 전송."
 
   # 처리 완료 기록
   PROCESSED_FILE="${STATE_DIR}/issue-${ISSUE_NUMBER}-processed"
