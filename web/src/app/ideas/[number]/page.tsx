@@ -99,14 +99,14 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       </Card>
 
       {/* Comments */}
-      <div className="mb-6">
+      <div className="mb-28">
         <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
           <MessageSquare className="h-4 w-4" />
           댓글 {comments.length}개
         </h2>
 
         {comments.length > 0 && (
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3">
             {[...comments].reverse().map((comment) => (
               <CommentItem
                 key={comment.id}
@@ -117,14 +117,13 @@ export default async function IdeaDetailPage({ params }: PageProps) {
             ))}
           </div>
         )}
+      </div>
 
-        {/* Comment Form */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">댓글 작성</h3>
-            <CommentForm issueNumber={number} />
-          </CardContent>
-        </Card>
+      {/* Floating Comment Form */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto max-w-2xl px-4 py-3">
+          <CommentForm issueNumber={number} />
+        </div>
       </div>
     </div>
   );

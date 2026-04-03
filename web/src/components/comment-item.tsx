@@ -29,8 +29,8 @@ export function CommentItem({ author, date, body }: CommentItemProps) {
           <span className="text-xs text-slate-400">{date}</span>
         </div>
       </CardHeader>
-      <CardContent className="pb-4 pt-0 px-4">
-        <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700">
+      <CardContent className="pb-4 pt-0 px-4 overflow-hidden">
+        <pre className="whitespace-pre-wrap break-all font-sans text-sm text-slate-700">
           {displayText}
         </pre>
         {isLong && (
