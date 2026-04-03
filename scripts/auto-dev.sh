@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+export TZ="Asia/Seoul"
+
 REPO_OWNER="eggdory-dev"
 HUB_REPO="${REPO_OWNER}/idea-hub"
 PROJECTS_DIR="$HOME/Documents/repository/projects"
@@ -23,9 +25,9 @@ LOCK_FILE="${STATE_DIR}/auto-dev.lock"
 # 상태 디렉토리 생성
 mkdir -p "$STATE_DIR"
 
-# 로그 함수
+# 로그 함수 (KST)
 log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S KST')] $*" | tee -a "$LOG_FILE"
 }
 
 # 잠금 확인 (중복 실행 방지)
@@ -102,7 +104,9 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
 
   if [ -z "$NEW_COMMENTS" ]; then
     log "  새 댓글 없음."
-    date -u '+%Y-%m-%dT%H:%M:%SZ' > "$LAST_CHECK_FILE"
+    NOW_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    echo "$NOW_UTC" > "$LAST_CHECK_FILE"
+    log "  기준 시각 갱신: ${NOW_UTC} (KST: $(date '+%Y-%m-%d %H:%M:%S'))"
     continue
   fi
 
@@ -112,7 +116,7 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
 
   if [ -z "$PROJECT_SLUG" ]; then
     log "  프로젝트 레포를 찾을 수 없습니다. 건너뜁니다."
-    date -u '+%Y-%m-%dT%H:%M:%SZ' > "$LAST_CHECK_FILE"
+    echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$LAST_CHECK_FILE"
     continue
   fi
 
@@ -120,7 +124,7 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
 
   if [ ! -d "$PROJECT_DIR" ]; then
     log "  프로젝트 디렉토리 없음: ${PROJECT_DIR}, 건너뜁니다."
-    date -u '+%Y-%m-%dT%H:%M:%SZ' > "$LAST_CHECK_FILE"
+    echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$LAST_CHECK_FILE"
     continue
   fi
 
@@ -167,7 +171,9 @@ _자동 실행 by auto-dev.sh_"
   # 처리 완료 기록
   PROCESSED_FILE="${STATE_DIR}/issue-${ISSUE_NUMBER}-processed"
   echo -e "$PROCESSED_IDS" >> "$PROCESSED_FILE"
-  date -u '+%Y-%m-%dT%H:%M:%SZ' > "$LAST_CHECK_FILE"
+  NOW_UTC=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  echo "$NOW_UTC" > "$LAST_CHECK_FILE"
+  log "  기준 시각 갱신: ${NOW_UTC} (KST: $(date '+%Y-%m-%d %H:%M:%S'))"
 
 done <<< "$ISSUES"
 
