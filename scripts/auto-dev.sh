@@ -134,19 +134,17 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
   # 새 댓글들을 하나의 프롬프트로 합치기
   PROMPT="idea-hub Issue #${ISSUE_NUMBER} (${ISSUE_TITLE})에 새로운 요청이 들어왔습니다.\n\n"
   PROCESSED_IDS=""
-  ALL_URLS=""
 
   while IFS='|' read -r COMMENT_ID CREATED_AT AUTHOR BODY; do
     [ -z "$COMMENT_ID" ] && continue
     PROMPT="${PROMPT}--- @${AUTHOR} (${CREATED_AT}) ---\n${BODY}\n\n"
     PROCESSED_IDS="${PROCESSED_IDS}${COMMENT_ID}\n"
-
-    # 댓글에서 URL 추출
-    URLS=$(echo "$BODY" | grep -oE 'https?://[^ ]+' || echo "")
-    if [ -n "$URLS" ]; then
-      ALL_URLS="${ALL_URLS}${URLS}\n"
-    fi
   done <<< "$(echo -e "$NEW_COMMENTS")"
+
+  # 새 댓글의 원본 본문에서 URL 추출 (GitHub API에서 직접)
+  ALL_URLS=$(gh api "repos/${HUB_REPO}/issues/${ISSUE_NUMBER}/comments" \
+    --jq "[.[] | select(.created_at > \"${LAST_CHECK}\") | select(.body | test(\"상태로 변경됨\") | not) | select(.body | test(\"🤖\") | not) | .body] | join(\" \")" \
+    2>/dev/null | grep -oE 'https?://[^ )"]+' | sort -u || echo "")
 
   # URL 프리페치: 댓글에 포함된 URL 내용을 가져와서 프롬프트에 추가
   if [ -n "$ALL_URLS" ]; then
@@ -165,7 +163,7 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
         | tr -s '[:space:]' ' ' \
         | head -c 5000 || echo "(내용을 가져올 수 없습니다)")
       PROMPT="${PROMPT}[URL: ${URL:0:100}]\n${PAGE_CONTENT}\n\n"
-    done <<< "$(echo -e "$ALL_URLS" | sort -u)"
+    done <<< "$ALL_URLS"
   fi
 
   PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 참고 자료 URL의 내용을 레퍼런스로 활용하세요. 완료 후 git commit & push 해주세요."
@@ -173,7 +171,7 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
   log "  Claude Code 실행 중..."
 
   # Claude Code 실행
-  RESULT=$(cd "$PROJECT_DIR" && echo -e "$PROMPT" | claude --print --dangerously-skip-permissions 2>&1) || true
+  RESULT=$(cd "$PROJECT_DIR" && echo -e "$PROMPT" | claude -p --dangerously-skip-permissions --output-format text --max-turns 50 2>&1) || true
 
   # 결과 요약 (앞 2000자)
   RESULT_SUMMARY=$(echo "$RESULT" | tail -100 | head -c 2000)
