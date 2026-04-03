@@ -70,8 +70,9 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
   fi
 
   # 댓글 조회
+  # 자동 생성 댓글 제외: 상태 변경("상태로 변경됨"), 자동 개발 보고("🤖"), 프로젝트 초기화("프로젝트 초기화")
   COMMENTS_JSON=$(gh api "repos/${HUB_REPO}/issues/${ISSUE_NUMBER}/comments" \
-    --jq '.[] | select(.body | test("\\(via idea-hub\\)") | not) | select(.body | test("🤖 자동 개발") | not) | "\(.id)|\(.created_at)|\(.user.login)|\(.body)"' \
+    --jq '.[] | select(.body | test("상태로 변경됨") | not) | select(.body | test("🤖") | not) | select(.body | test("프로젝트 초기화") | not) | select(.body | test("개발 현황 리포트") | not) | "\(.id)|\(.created_at)|\(.user.login)|\(.body)"' \
     2>/dev/null || echo "")
 
   if [ -z "$COMMENTS_JSON" ]; then
