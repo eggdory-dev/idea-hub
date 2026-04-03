@@ -134,14 +134,41 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
   # 새 댓글들을 하나의 프롬프트로 합치기
   PROMPT="idea-hub Issue #${ISSUE_NUMBER} (${ISSUE_TITLE})에 새로운 요청이 들어왔습니다.\n\n"
   PROCESSED_IDS=""
+  ALL_URLS=""
 
   while IFS='|' read -r COMMENT_ID CREATED_AT AUTHOR BODY; do
     [ -z "$COMMENT_ID" ] && continue
     PROMPT="${PROMPT}--- @${AUTHOR} (${CREATED_AT}) ---\n${BODY}\n\n"
     PROCESSED_IDS="${PROCESSED_IDS}${COMMENT_ID}\n"
+
+    # 댓글에서 URL 추출
+    URLS=$(echo "$BODY" | grep -oE 'https?://[^ ]+' || echo "")
+    if [ -n "$URLS" ]; then
+      ALL_URLS="${ALL_URLS}${URLS}\n"
+    fi
   done <<< "$(echo -e "$NEW_COMMENTS")"
 
-  PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 완료 후 git commit & push 해주세요."
+  # URL 프리페치: 댓글에 포함된 URL 내용을 가져와서 프롬프트에 추가
+  if [ -n "$ALL_URLS" ]; then
+    PROMPT="${PROMPT}--- 참고 자료 (댓글에 포함된 URL 내용) ---\n\n"
+    while IFS= read -r URL; do
+      [ -z "$URL" ] && continue
+      # URL 끝의 특수문자 정리
+      URL=$(echo "$URL" | sed 's/[)>]*$//')
+      log "  URL 프리페치: ${URL:0:80}..."
+      # 페이지 내용 가져오기 (텍스트만, 최대 5000자, 10초 타임아웃)
+      PAGE_CONTENT=$(curl -sL --max-time 10 -H "User-Agent: Mozilla/5.0" "$URL" 2>/dev/null \
+        | sed 's/<script[^>]*>.*<\/script>//g' \
+        | sed 's/<style[^>]*>.*<\/style>//g' \
+        | sed 's/<[^>]*>//g' \
+        | sed 's/&nbsp;/ /g; s/&amp;/\&/g; s/&lt;/</g; s/&gt;/>/g' \
+        | tr -s '[:space:]' ' ' \
+        | head -c 5000 || echo "(내용을 가져올 수 없습니다)")
+      PROMPT="${PROMPT}[URL: ${URL:0:100}]\n${PAGE_CONTENT}\n\n"
+    done <<< "$(echo -e "$ALL_URLS" | sort -u)"
+  fi
+
+  PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 참고 자료 URL의 내용을 레퍼런스로 활용하세요. 완료 후 git commit & push 해주세요."
 
   log "  Claude Code 실행 중..."
 
