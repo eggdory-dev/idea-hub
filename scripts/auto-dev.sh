@@ -77,11 +77,158 @@ trap 'rm -f "$LOCK_FILE"' EXIT
 
 log "========== 자동 개발 스캔 시작 =========="
 
+# 0. approved 상태인 Issue 자동 초기화
+APPROVED_ISSUES=$(gh issue list --repo "$HUB_REPO" --label "approved" --json number,title,body --jq '.[] | "\(.number)|\(.title)"' 2>/dev/null || echo "")
+
+if [ -n "$APPROVED_ISSUES" ]; then
+  log "approved 상태 아이디어 발견: $(echo "$APPROVED_ISSUES" | wc -l | tr -d ' ')개"
+
+  while IFS='|' read -r A_NUMBER A_TITLE; do
+    [ -z "$A_NUMBER" ] && continue
+    log "--- [AUTO-INIT] Issue #${A_NUMBER}: ${A_TITLE} ---"
+
+    # slug 생성 (영문만 추출, 없으면 issue-N)
+    A_SLUG=$(echo "$A_TITLE" | python3 -c "
+import sys
+title = sys.stdin.read().strip()
+result = ''
+for ch in title:
+    if ch.isascii() and (ch.isalnum() or ch == '-'):
+        result += ch.lower()
+    elif ch == ' ':
+        result += '-'
+result = '-'.join(filter(None, result.split('-')))
+print(result[:50] if result and result != '-' else '')
+")
+    if [ -z "$A_SLUG" ]; then
+      A_SLUG="idea-${A_NUMBER}"
+    fi
+
+    A_REPO_PATH="${PROJECTS_DIR}/${A_SLUG}"
+
+    # 이미 초기화된 경우 건너뛰기
+    if gh repo view "${REPO_OWNER}/${A_SLUG}" &>/dev/null; then
+      log "  레포 ${A_SLUG} 이미 존재. 라벨만 변경합니다."
+      gh issue edit "$A_NUMBER" --repo "$HUB_REPO" --add-label "building" --remove-label "approved" 2>/dev/null || true
+      continue
+    fi
+
+    # 레포 생성
+    gh repo create "${A_SLUG}" --private --description "Auto-generated from idea-hub Issue #${A_NUMBER}: ${A_TITLE}" 2>/dev/null || true
+    log "  레포 생성: ${REPO_OWNER}/${A_SLUG}"
+
+    # Clone
+    mkdir -p "$PROJECTS_DIR"
+    if [ ! -d "$A_REPO_PATH" ]; then
+      gh repo clone "${REPO_OWNER}/${A_SLUG}" "$A_REPO_PATH" 2>/dev/null || true
+    fi
+
+    if [ ! -d "$A_REPO_PATH" ]; then
+      log "  클론 실패, 건너뜁니다."
+      continue
+    fi
+
+    cd "$A_REPO_PATH"
+    mkdir -p docs src tests
+
+    # 기본 파일 생성
+    cat > CLAUDE.md << 'INIT_EOF'
+# CLAUDE.md
+
+## 프로젝트 개요
+이 프로젝트는 idea-hub에서 자동 생성되었습니다.
+
+## 개발 규칙
+- 한국어로 소통
+- 커밋 메시지는 conventional commits 형식
+- docs/requirements.md 기준으로 개발
+- 테스트 코드 필수 작성
+INIT_EOF
+
+    cat > README.md << INIT_EOF
+# ${A_TITLE}
+
+> Auto-generated from [idea-hub Issue #${A_NUMBER}](https://github.com/${HUB_REPO}/issues/${A_NUMBER})
+
+## 상태
+🚧 개발 중
+INIT_EOF
+
+    cat > .gitignore << 'INIT_EOF'
+node_modules/
+.env
+.env.local
+*.log
+.DS_Store
+build/
+dist/
+.next/
+INIT_EOF
+
+    # 아이디어 원문 저장
+    A_BODY=$(gh issue view "$A_NUMBER" --repo "$HUB_REPO" --json body --jq '.body' 2>/dev/null || echo "")
+    cat > docs/idea-original.md << INIT_EOF
+# 원본 아이디어
+
+- **Issue**: [#${A_NUMBER}](https://github.com/${HUB_REPO}/issues/${A_NUMBER})
+- **제목**: ${A_TITLE}
+- **생성일**: $(date -u '+%Y-%m-%d')
+
+---
+
+${A_BODY}
+INIT_EOF
+
+    touch docs/project-brief.md docs/requirements.md docs/mvp-scope.md docs/task-breakdown.md
+
+    git add -A
+    git commit -m "feat: 프로젝트 초기화 (idea-hub #${A_NUMBER})" 2>/dev/null || true
+    git push -u origin main 2>/dev/null || { git branch -M main && git push -u origin main 2>/dev/null; } || true
+
+    # Issue 업데이트
+    gh issue comment "$A_NUMBER" --repo "$HUB_REPO" --body "🚀 **레포지토리 자동 생성 완료**
+
+- **Repo**: [${REPO_OWNER}/${A_SLUG}](https://github.com/${REPO_OWNER}/${A_SLUG})
+- **로컬 경로**: \`${A_REPO_PATH}\`
+- **생성 시각**: $(date -u '+%Y-%m-%d %H:%M UTC')
+
+다음 단계: Claude Code로 분석 문서 생성 및 개발 시작
+
+---
+_자동 실행 by auto-dev.sh_" 2>/dev/null || true
+
+    gh issue edit "$A_NUMBER" --repo "$HUB_REPO" --add-label "building" --remove-label "approved" 2>/dev/null || true
+
+    # 분석 문서 생성 (Claude Code)
+    log "  분석 문서 생성 중..."
+    cd "$A_REPO_PATH"
+    echo "docs/idea-original.md 파일을 읽고, 다음 4개 분석 문서를 생성해주세요:
+1. docs/project-brief.md - 프로젝트 개요, 목표, 대상 사용자, 핵심 가치
+2. docs/requirements.md - 기능 요구사항 (필수/선택), 비기능 요구사항, 기술 스택 제안
+3. docs/mvp-scope.md - MVP에 포함할 기능, 제외할 기능, 성공 기준
+4. docs/task-breakdown.md - 개발 작업 목록 (우선순위별), 예상 복잡도
+완료 후 git commit & push 해주세요." | claude -p --dangerously-skip-permissions --output-format text --max-turns 30 2>&1 | tail -5 || true
+
+    log "  Issue #${A_NUMBER} 초기화 완료: ${A_SLUG}"
+
+    send_notification "🚀 자동 프로젝트 초기화 완료
+
+아이디어: ${A_TITLE}
+레포: ${REPO_OWNER}/${A_SLUG}
+상태: approved → building
+
+👉 https://web-iota-ashy-12.vercel.app/ideas/${A_NUMBER}"
+
+    cd "$HOME"
+  done <<< "$APPROVED_ISSUES"
+fi
+
 # 1. building 상태인 Issue 목록 조회
 ISSUES=$(gh issue list --repo "$HUB_REPO" --label "building" --json number,title --jq '.[] | "\(.number)|\(.title)"' 2>/dev/null || echo "")
 
 if [ -z "$ISSUES" ]; then
   log "building 상태인 아이디어가 없습니다."
+  log "========== 자동 개발 스캔 완료 =========="
   exit 0
 fi
 
