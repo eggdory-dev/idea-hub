@@ -207,7 +207,7 @@ _자동 실행 by auto-dev.sh_" 2>/dev/null || true
 2. docs/requirements.md - 기능 요구사항 (필수/선택), 비기능 요구사항, 기술 스택 제안
 3. docs/mvp-scope.md - MVP에 포함할 기능, 제외할 기능, 성공 기준
 4. docs/task-breakdown.md - 개발 작업 목록 (우선순위별), 예상 복잡도
-완료 후 git commit & push 해주세요." | claude -p --dangerously-skip-permissions --output-format text --max-turns 30 2>&1 | tail -5 || true
+완료 후 git commit & push 해주세요." | timeout 1800 claude -p --dangerously-skip-permissions --output-format text --max-turns 30 2>&1 | tail -5 || true
 
     log "  Issue #${A_NUMBER} 초기화 완료: ${A_SLUG}"
 
@@ -346,10 +346,10 @@ while IFS='|' read -r ISSUE_NUMBER ISSUE_TITLE; do
 
   PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 참고 자료 URL의 내용을 레퍼런스로 활용하세요. 완료 후 git commit & push 해주세요."
 
-  log "  Claude Code 실행 중..."
+  log "  Claude Code 실행 중... (최대 30분)"
 
-  # Claude Code 실행
-  RESULT=$(cd "$PROJECT_DIR" && echo -e "$PROMPT" | claude -p --dangerously-skip-permissions --output-format text --max-turns 50 2>&1) || true
+  # Claude Code 실행 (30분 타임아웃)
+  RESULT=$(cd "$PROJECT_DIR" && timeout 1800 bash -c 'echo -e "$1" | claude -p --dangerously-skip-permissions --output-format text --max-turns 50 2>&1' _ "$PROMPT") || true
 
   # 결과 요약 (앞 2000자)
   RESULT_SUMMARY=$(echo "$RESULT" | tail -100 | head -c 2000)
