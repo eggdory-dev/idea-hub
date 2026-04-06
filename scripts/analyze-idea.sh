@@ -58,12 +58,14 @@ echo ""
 
 # Claude Code CLI로 분석 실행
 claude --print "
-docs/idea-original.md 파일을 읽고, 다음 4개 분석 문서를 생성해주세요:
+docs/idea-original.md 파일을 읽고, 다음 작업을 수행해주세요:
 
 1. docs/project-brief.md - 프로젝트 개요, 목표, 대상 사용자, 핵심 가치
 2. docs/requirements.md - 기능 요구사항 (필수/선택), 비기능 요구사항, 기술 스택 제안
 3. docs/mvp-scope.md - MVP에 포함할 기능, 제외할 기능, 성공 기준
 4. docs/task-breakdown.md - 개발 작업 목록 (우선순위별), 예상 복잡도
+5. docs/index.md를 갱신하여 위 4개 문서의 링크와 한 줄 요약을 추가하세요.
+6. docs/log.md에 분석 완료 기록을 추가하세요 (형식: ## [YYYY-MM-DD] analysis | 아이디어 분석 문서 생성)
 
 각 문서는 한국어로 작성하고, 불명확한 항목은 ⚠️로 표시해주세요.
 코드는 생성하지 마세요. 분석 문서만 작성해주세요.

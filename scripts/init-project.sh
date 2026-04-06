@@ -111,6 +111,21 @@ cat > CLAUDE.md << 'CLAUDE_EOF'
 
 ## 핵심 명령어
 - 개발 관련 명령어는 프로젝트 세팅 후 추가
+
+## Wiki 유지보수 (docs/)
+
+### 구조
+- `docs/idea-original.md` — 원본 아이디어 (수정 금지, raw source)
+- `docs/index.md` — 문서 목록 및 요약 (카탈로그)
+- `docs/log.md` — 작업 기록 (시간순, append-only)
+- `docs/*.md` — 분석/설계/결정 문서 (wiki pages)
+
+### 규칙
+1. 문서 생성/수정 시 → docs/index.md에 링크와 한 줄 요약 갱신
+2. 의미 있는 작업 완료 시 → docs/log.md에 `## [YYYY-MM-DD] 카테고리 | 제목` 형식으로 기록
+3. 새로운 설계 결정, 기술 조사, 아키텍처 변경 시 → docs/에 별도 문서 작성 + index.md 갱신
+4. idea-original.md는 절대 수정 금지
+5. 주기적으로 wiki 점검: 오래된 정보, 누락 문서, 끊어진 참조 확인
 CLAUDE_EOF
 
 # README.md 생성
@@ -166,6 +181,28 @@ touch docs/project-brief.md
 touch docs/requirements.md
 touch docs/mvp-scope.md
 touch docs/task-breakdown.md
+
+# Wiki 초기 파일 생성
+cat > docs/index.md << 'INDEX_EOF'
+# 문서 목록
+
+## 원본
+- [idea-original.md](idea-original.md) — 원본 아이디어
+
+## 분석
+- [project-brief.md](project-brief.md) — 프로젝트 개요
+- [requirements.md](requirements.md) — 요구사항 정의
+- [mvp-scope.md](mvp-scope.md) — MVP 범위
+- [task-breakdown.md](task-breakdown.md) — 작업 분해
+INDEX_EOF
+
+cat > docs/log.md << EOF
+# 작업 기록
+
+## [$(date -u '+%Y-%m-%d')] init | 프로젝트 초기화
+- idea-hub Issue #${ISSUE_NUMBER}에서 자동 생성
+- 기본 템플릿 적용
+EOF
 
 echo "  ✅ 문서 저장 완료"
 
