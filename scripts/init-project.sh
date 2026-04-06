@@ -105,6 +105,7 @@ cat > CLAUDE.md << 'CLAUDE_EOF'
 ## 개발 규칙
 - 한국어로 소통
 - 커밋 메시지는 conventional commits 형식
+- 커밋 시 반드시 --author='eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>' 사용
 - docs/requirements.md 기준으로 개발
 - 테스트 코드 필수 작성
 - PR 단위로 작업
@@ -210,7 +211,7 @@ echo "  ✅ 문서 저장 완료"
 echo ""
 echo "[6/7] 초기 커밋 및 푸시..."
 git add -A
-git commit -m "feat: 프로젝트 초기화 (idea-hub #${ISSUE_NUMBER})
+git commit --author="eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>" -m "feat: 프로젝트 초기화 (idea-hub #${ISSUE_NUMBER})
 
 - CLAUDE.md, README.md, .gitignore 생성
 - docs/ 디렉토리 구조 생성

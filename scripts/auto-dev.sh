@@ -173,6 +173,7 @@ print(result[:50] if result and result != '-' else '')
 ## 개발 규칙
 - 한국어로 소통
 - 커밋 메시지는 conventional commits 형식
+- 커밋 시 반드시 --author='eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>' 사용
 - docs/requirements.md 기준으로 개발
 - 테스트 코드 필수 작성
 
@@ -251,7 +252,7 @@ WIKI_INDEX_EOF
 WIKI_LOG_EOF
 
     git add -A
-    git commit -m "feat: 프로젝트 초기화 (idea-hub #${A_NUMBER})" 2>/dev/null || true
+    git commit --author="eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>" -m "feat: 프로젝트 초기화 (idea-hub #${A_NUMBER})" 2>/dev/null || true
     git push -u origin main 2>/dev/null || { git branch -M main && git push -u origin main 2>/dev/null; } || true
 
     # Issue 업데이트
@@ -279,7 +280,7 @@ _자동 실행 by auto-dev.sh_" 2>/dev/null || true
 5. docs/index.md를 갱신하여 위 4개 문서의 링크와 한 줄 요약을 추가하세요.
 6. docs/log.md에 분석 완료 기록을 추가하세요 (형식: ## [YYYY-MM-DD] analysis | 아이디어 분석 문서 생성)
 각 문서는 한국어로 작성하고, 불명확한 항목은 ⚠️로 표시해주세요.
-완료 후 git commit & push 해주세요."
+완료 후 git commit --author='eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>' & push 해주세요."
     echo "$CLAUDE_PROMPT" | claude -p --dangerously-skip-permissions --output-format text --max-turns 30 2>&1 | tail -5 || true
 
     log "  Issue #${A_NUMBER} 초기화 완료: ${A_SLUG}"
@@ -444,7 +445,7 @@ while IFS= read -r ISSUE_LINE; do
     done <<< "$ALL_URLS"
   fi
 
-  PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 참고 자료 URL의 내용을 레퍼런스로 활용하세요. 완료 후 git commit & push 해주세요."
+  PROMPT="${PROMPT}위 요청사항을 분석하고 구현해주세요. 참고 자료 URL의 내용을 레퍼런스로 활용하세요. 완료 후 git commit --author='eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>' & push 해주세요."
 
   log "  Claude Code 실행 중... (최대 30분)"
 

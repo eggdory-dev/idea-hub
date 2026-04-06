@@ -70,7 +70,7 @@ for PROJECT_DIR in "$PROJECTS_DIR"/*/; do
 4. idea-original.md는 절대 수정 금지
 5. 주기적으로 wiki 점검: 오래된 정보, 누락 문서, 끊어진 참조 확인
 
-완료 후 git commit -m 'docs: LLM Wiki 구조 추가 (index.md, log.md)' && git push 해주세요." \
+완료 후 git commit --author='eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>' -m 'docs: LLM Wiki 구조 추가 (index.md, log.md)' && git push 해주세요." \
     | claude -p --dangerously-skip-permissions --output-format text --max-turns 20 2>&1 | tail -5 || true
 
   echo "  ✅ ${PROJECT_NAME} 마이그레이션 완료"

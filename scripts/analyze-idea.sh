@@ -76,7 +76,7 @@ echo "✅ 분석 문서 생성 완료"
 
 # commit & push
 git add docs/
-git commit -m "docs: 아이디어 분석 문서 생성 (idea-hub #${ISSUE_NUMBER})
+git commit --author="eggdory-dev <229576826+eggdory-dev@users.noreply.github.com>" -m "docs: 아이디어 분석 문서 생성 (idea-hub #${ISSUE_NUMBER})
 
 - project-brief.md
 - requirements.md
