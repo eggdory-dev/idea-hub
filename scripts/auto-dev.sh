@@ -361,8 +361,9 @@ while IFS= read -r ISSUE_LINE; do
   touch "$PROCESSED_FILE"
 
   # processed 파일 정리: 숫자만 남기기 (오염된 데이터 제거)
+  # grep 매치 0건이어도 exit 1로 죽지 않게 || true. pipefail 환경에서 빈 파일 케이스 처리.
   if [ -f "$PROCESSED_FILE" ]; then
-    grep -E '^[0-9]+$' "$PROCESSED_FILE" 2>/dev/null | sort -u > "${PROCESSED_FILE}.clean"
+    { grep -E '^[0-9]+$' "$PROCESSED_FILE" 2>/dev/null || true; } | sort -u > "${PROCESSED_FILE}.clean"
     mv "${PROCESSED_FILE}.clean" "$PROCESSED_FILE"
   fi
 
