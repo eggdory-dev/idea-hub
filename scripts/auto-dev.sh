@@ -395,6 +395,30 @@ while IFS= read -r ISSUE_LINE; do
     --jq '[.[].body] | join(" ")' 2>/dev/null \
     | grep -o 'eggdory-dev/[a-z0-9-]*' | head -1 | sed 's/eggdory-dev\///' || echo "")
 
+  # Fallback: 댓글에 레포 링크가 없으면 이슈 제목에서 slug를 추론하고 실제 레포 존재 여부 확인.
+  # approved init이 댓글 작성 직전에 멈춘 케이스(레포는 만들어졌으나 댓글 누락) 복구용.
+  if [ -z "$PROJECT_SLUG" ]; then
+    CANDIDATE_SLUG=$(echo "$ISSUE_TITLE" | python3 -c "
+import sys
+title = sys.stdin.read().strip()
+result = ''
+for ch in title:
+    if ch.isascii() and (ch.isalnum() or ch == '-'):
+        result += ch.lower()
+    elif ch == ' ':
+        result += '-'
+result = '-'.join(filter(None, result.split('-')))
+print(result[:50] if result and result != '-' else '')
+")
+    if [ -z "$CANDIDATE_SLUG" ]; then
+      CANDIDATE_SLUG="idea-${ISSUE_NUMBER}"
+    fi
+    if gh repo view "${REPO_OWNER}/${CANDIDATE_SLUG}" &>/dev/null; then
+      PROJECT_SLUG="$CANDIDATE_SLUG"
+      log "  댓글에 레포 링크 없음 — 제목에서 추론한 slug 사용: ${PROJECT_SLUG}"
+    fi
+  fi
+
   if [ -z "$PROJECT_SLUG" ]; then
     log "  프로젝트 레포를 찾을 수 없습니다. 건너뜁니다."
     SCAN_SUMMARY="${SCAN_SUMMARY}  - #${ISSUE_NUMBER}: 레포 못 찾음\n"

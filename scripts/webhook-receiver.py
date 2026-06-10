@@ -132,8 +132,10 @@ class Handler(BaseHTTPRequestHandler):
         issue = payload.get("issue") or {}
         issue_number = issue.get("number", 0)
         labels = {l.get("name") for l in issue.get("labels", [])}
-        if "building" not in labels:
-            logging.info("issue #%s: building 라벨 없음, 무시", issue_number)
+        # auto-dev.sh는 approved(자동 init)와 building(개발 진행) 둘 다 처리한다.
+        if not (labels & {"building", "approved"}):
+            logging.info("issue #%s: building/approved 라벨 없음, 무시 (labels=%s)",
+                         issue_number, sorted(labels))
             self._send(204)
             return
 
